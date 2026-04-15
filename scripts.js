@@ -76,10 +76,6 @@ async function getWeather(cityName) {
 class WeatherDashboard {
     #cities = [];
     #refreshIntervals = new Map();
-    
-    constructor(){
-        this.load()
-    }
 
     async addCity(cityName) {
 
