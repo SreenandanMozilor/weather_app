@@ -1,0 +1,14 @@
+:root {
+  /* Colors from Figma */
+  --bg-app: #F0F4F8;
+  --bg-surface: rgba(255, 255, 255, 0.8); /* Semi-transparent for glass effect */
+  --text-primary: #0D1117;
+  --text-secondary: #57606A;
+  --accent-primary: #6366F1; /* Button color */
+  
+  /* Condition Colors for Card Top Borders */
+  --color-sunny: #FFB323;
+  --color-rainy: #4F8EF7;
+  --color-stormy: #7C5CFC;
+  --color-snowy: #A8D8EA;
+}
