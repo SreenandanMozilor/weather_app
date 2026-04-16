@@ -64,7 +64,7 @@ async function getWeather(cityName) {
                 date,
                 max: temperature_2m_max[index],
                 min: temperature_2m_min[index]
-            })) ?? [] // nullish coalescing operator
+            })).slice(0,5) ?? [] // nullish coalescing operator
         }
 
     } catch (error){
