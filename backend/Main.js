@@ -1,7 +1,7 @@
-import { getGeoCityName, getUserLocation } from "./Geolocation";
-import { addToHistory } from "./SearchHistory";
-import { getCoordinates, getWeather } from "./Api";
-import { WeAppError } from "./Error";
+import { getGeoCityName, getUserLocation } from "./Geolocation.js";
+import { addToHistory } from "./SearchHistory.js";
+import { getCoordinates, getWeather } from "./Api.js";
+import { WeAppError } from "./Error.js";
 
 class WeatherDashboard {
     #cities = [];
@@ -108,9 +108,20 @@ class WeatherDashboard {
         }
 
         if (this.#cities.length == 0) {
-            const {lat, lon} = await getUserLocation();
-            this.addCity(getGeoCityName(lat, lon));
+            try {
+                const {lat, lon} = await getUserLocation();
+                const cityName = await getGeoCityName(lat, lon);
+                if (cityName) await this.addCity(cityName);
+            } catch (geoError) {
+                console.warn("Geolocation unavailable, showing empty state:", geoError.message);
+                // Silent fail — empty state will render
+            }
         }
     }
 
+    getCities() {
+        return [...this.#cities];// We return a shallow copy using the spread operator [...]. This prevents outside code from accidentally mutating the private #cities array.
+    }
 }
+
+export {WeatherDashboard}

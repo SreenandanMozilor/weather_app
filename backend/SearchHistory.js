@@ -5,3 +5,7 @@ export function addToHistory(cityName) {
     searchHistory.push(cityName)
     if(searchHistory.length>5) {searchHistory.splice(0,1);}
 }
+
+export function getHistory() {
+    return [...searchHistory].reverse();
+}

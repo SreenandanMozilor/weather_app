@@ -1,4 +1,4 @@
-import { WeAppError } from "./Error";
+import { WeAppError } from "./Error.js";
 
 function getUserLocation() {
     return new Promise((resolve, reject) => {

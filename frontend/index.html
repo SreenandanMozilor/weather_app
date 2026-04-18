@@ -3,25 +3,40 @@
 
 <head>
     <title>Weather App</title>
-    <meta charset="UTF-8" name = "viewport" content = "width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name = "viewport" content = "width=device-width, initial-scale=1">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <header>
-        <nav>
-
-        </nav>
-        <h1>Skywatcher</h1>
-        <div class = "search-container">
-            <input type = "text" id = "city-name" placeholder = "Search City" >
-            <button id = "add-city-button">Add City</button>
-            <div id = "search-history" class = "hidden-dropdown">
-
-            </div>
+    <header class="app-header">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="2" x2="12" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+            </svg>
+            <h1>Skywatcher</h1>
         </div>
-        <div class = "toggle-container">
-            <button class = "unit-toggle"> &deg;C / &deg;F </button>
+
+        <div class="header-controls">
+            <div class="refresh-status">
+                <span class="status-dot"></span> Auto-refresh 10 min
+            </div>
+
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="city-name" placeholder="Search City">
+                <button id="add-city-button">Add City</button>
+                
+                <div id="search-history" class="hidden-dropdown"></div>
+            </div>
+
+            <div class="unit-toggle" id="unit-toggle">
+                <span class="toggle-label celsius active">°C</span>
+                <span class="toggle-label fahrenheit">°F</span>
+                <div class="toggle-slider"></div>
+            </div>
         </div>
     </header>
 
@@ -37,4 +52,7 @@
         </div>
     </template>
 
+    <div id="toast-container"></div>
+
+    <script type="module" src="./ui.js"></script>
 </body>

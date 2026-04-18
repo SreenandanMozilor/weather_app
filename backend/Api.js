@@ -1,8 +1,8 @@
-import { WeAppError } from "./Error";
+import { WeAppError } from "./Error.js";
 
 async function getCoordinates(cityName) {
     
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,visibility&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`;
 
     try {
         const response = await fetch(url);
@@ -32,7 +32,7 @@ async function getWeather(cityName) {
 
         const { latitude, longitude, name, country } = await getCoordinates(cityName);
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,visibility&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
 
         const response = await fetch(url);
 
@@ -46,7 +46,7 @@ async function getWeather(cityName) {
 
         const { temperature_2m, apparent_temperature, relative_humidity_2m, wind_speed_10m, weather_code } = current;
 
-        const { temperature_2m_max, temperature_2m_min} = daily;
+        const { temperature_2m_max, temperature_2m_min, weather_code: daily_code} = daily;
 
         return {
             location: `${name}, ${country}`,
@@ -57,8 +57,10 @@ async function getWeather(cityName) {
             forecast : daily.time?.map((date, index) => ({
                 date,
                 max: temperature_2m_max[index],
-                min: temperature_2m_min[index]
+                min: temperature_2m_min[index],
+                code: daily_code[index]
             })).slice(0,5) ?? [], // nullish coalescing operator
+            weatherCode: weather_code,
             visibility: (data.current.visibility / 1000).toFixed(1), // Convert meters to km
         }
 
