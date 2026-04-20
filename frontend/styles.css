@@ -384,3 +384,82 @@
     transition: background 0.2s, color 0.2s;
 }
 .retry-error-btn:hover { background: #EF4444; color: white; }
+
+/* --- DARK MODE VARIABLES --- */
+[data-theme="dark"] {
+    --bg-app: #0D1117; /* Deep dark background */
+    --bg-surface: rgba(30, 35, 40, 0.75); /* Dark glass */
+    --text-primary: #F0F4F8; /* Light text */
+    --text-secondary: #8B9CB0; /* Dimmer text */
+    --accent-primary: #818CF8; /* Slightly lighter purple for contrast */
+}
+
+/* Base Body Styles (Crucial for Dark Mode to apply to the whole page) */
+body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Ensure inputs and dropdowns adapt to dark mode */
+#city-name {
+    color: var(--text-primary);
+}
+#search-history, .toast {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+}
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.05); /* Softer hover state for dark mode */
+}
+
+/* Theme Toggle Button Styling */
+.theme-toggle {
+    background: var(--bg-surface);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    width: 40px; 
+    height: 40px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.2s, background 0.3s;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .theme-toggle {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.05);
+}
+
+/* --- DARK MODE UI --- */
+
+/* Header glass dark */
+[data-theme="dark"] .app-header {
+    background: rgba(13, 17, 23, 0.85); 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/*  Darken the search bar container */
+[data-theme="dark"] .search-container {
+    background: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] #city-name::placeholder {
+    color: var(--text-secondary);
+}
+
+/* 4. Darken the C/F toggle background */
+[data-theme="dark"] .unit-toggle {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}

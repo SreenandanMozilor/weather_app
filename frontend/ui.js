@@ -401,5 +401,33 @@ historyDropdown.addEventListener('click', async (event) => {
     }
 });
 
+// --- DARK MODE LOGIC ---
+const themeToggle = document.getElementById('theme-toggle');
+
+// 1. Check local storage for a saved theme on load
+const savedTheme = localStorage.getItem('weather_theme') || 'light';
+if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggle.textContent = '☀️'; // Change icon to Sun
+}
+
+// 2. The Click Listener
+themeToggle.addEventListener('click', () => {
+    // Check what the current theme is
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    
+    if (currentTheme === 'dark') {
+        // Switch to Light Mode
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('weather_theme', 'light');
+        themeToggle.textContent = '🌙';
+    } else {
+        // Switch to Dark Mode
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('weather_theme', 'dark');
+        themeToggle.textContent = '☀️';
+    }
+});
+
 // Start the engine
 initApp();
