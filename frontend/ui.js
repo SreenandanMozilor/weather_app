@@ -201,10 +201,16 @@ function showToast(message, type = 'success') {
 
 // --- Event Listeners ---
 
-// Show default history when clicked on empty search bar
+// Show default history or live search when clicking on the search bar
 searchInput.addEventListener('focus', () => {
-    if (!searchInput.value.trim()) {
+    const query = searchInput.value.trim().toLowerCase();
+    
+    if (!query) {
+        // If empty, show recent searches
         renderDropdownList(getHistory(), [], "");
+    } else {
+        // If there's already text in the bar, manually trigger the 'input' event to wake the dropdown back up
+        searchInput.dispatchEvent(new Event('input'));
     }
 });
 
