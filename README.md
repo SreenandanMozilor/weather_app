@@ -102,3 +102,10 @@ This project evolved from a basic API fetching script into a highly defensive, s
 While the core application strictly adheres to the provided assignment brief and Figma designs, I took the initiative to build an additional feature to enhance the overall user experience:
 
 * **One-Click Geolocation:** A custom, animated map-pin button was added to the header controls. When clicked, it utilizes the browser's native Geolocation API and BigDataCloud's reverse-geocoding to instantly detect and track the user's current city. This feature hooks directly into the existing application architecture, ensuring it perfectly respects the 8-city maximum limit, duplicate city checks, and error-routing logic.
+
+### One-Click Geolocation Edge Cases & Robustness
+Several critical edge cases were identified and patched to ensure production-level stability:
+* **Regex Injection Prevention:** The live-search highlighter (`new RegExp`) was crashing when users typed special characters (like `(` or `*`). Input escaping was added to sanitize queries before regex evaluation.
+* **Dangling Promises:** The geolocation loading animation was removing itself synchronously while the asynchronous `handleAddCity` function was still pending. An `await` keyword was added to synchronize the UI state with the network layer.
+* **Infinite GPS Hangs:** The native Geolocation API lacks a default timeout, meaning restrictive networks could cause the app to hang indefinitely. An explicit `timeout` configuration (10 seconds) was added to ensure the error fallback always triggers safely.
+* **Spam-Click Race Conditions:** Rapidly clicking the location button caused concurrent network requests and duplicate UI state mutations. A disable/enable toggle was implemented on the button during active transactions to prevent event spamming.

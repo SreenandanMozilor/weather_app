@@ -168,7 +168,9 @@ function renderDropdownList(historyList, apiList, query = "") {
 // 4. Helper function to make the matching letters bold
 function highlightMatch(cityStr, query) {
     if (!query) return cityStr;
-    const regex = new RegExp(`(${query})`, "gi");
+    // Strip special regex characters from the query safely
+    const escapedQuery = query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
     return cityStr.replace(regex, "<strong>$1</strong>");
 }
 
@@ -330,6 +332,10 @@ themeToggle.addEventListener('click', () => {
 
 // --- GET CURRENT LOCATION ---
 locateBtn.addEventListener('click', async () => {
+    // Prevent spam clicking!
+    if (locateBtn.disabled) return;
+    locateBtn.disabled = true;
+
     const svgIcon = locateBtn.querySelector('svg');
     
     // Start spinning animation
@@ -344,7 +350,7 @@ locateBtn.addEventListener('click', async () => {
         
         // 3. Pass it to your existing robust add-city flow
         if (cityName) {
-            handleAddCity(cityName);
+            await handleAddCity(cityName);
         }
     } catch (error) {
         // Gracefully handle denied permissions or reverse-geocode failures
@@ -352,6 +358,7 @@ locateBtn.addEventListener('click', async () => {
     } finally {
         // Stop spinning animation
         svgIcon.classList.remove('loading-spin');
+        locateBtn.disabled = false; // <-- Re-enable the button
     }
 });
 

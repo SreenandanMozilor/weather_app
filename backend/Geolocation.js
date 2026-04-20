@@ -16,7 +16,8 @@ function getUserLocation() {
             },
             (error) => {
                 reject(new WeAppError("Unable to get your current location", "GEOLOC_UNABLE"));
-            }
+            },
+            { timeout: 10000, maximumAge: 0 }
         )
     })
 }
