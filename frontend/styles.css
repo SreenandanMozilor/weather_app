@@ -302,6 +302,16 @@
     100% { transform: translateX(100%); }
 }
 
+/* --- EMPTY STATE ICON --- */
+.empty-icon {
+    font-size: 80px;
+    line-height: 1;
+    margin: 0;
+    display: block;
+    /* Adds a soft shadow to enhance the 3D feel */
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+}
+
 .empty-state {
     grid-column: 1 / -1;
     display: flex;

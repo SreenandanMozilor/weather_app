@@ -38,10 +38,8 @@ function renderGrid() {
     if (cities.length === 0 && errorCards.length === 0) {
         grid.innerHTML = `
             <div class="empty-state">
-                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                </svg>
+                <div class="empty-icon">🌍</div>
+                
                 <h2>No cities yet</h2>
                 <p>Search for a city above to start tracking weather across the world.<br>You can track up to 8 cities at once.</p>
                 <button class="add-first-city-btn">+ Add Your First City</button>
