@@ -261,10 +261,14 @@ addBtn.addEventListener('click', async () => {
         addToHistory(addedCity.location);
         showToast(`${addedCity.location} was added to your dashboard`, 'success');
     } catch (error) {
-        if (error.type !== 'DUPLICATE' && error.type !== 'LIMIT_REACHED') {
+        // Route 1: State Errors get Toasts ONLY
+        if (error.type === 'DUPLICATE' || error.type === 'LIMIT_REACHED') {
+            showToast(error.message, 'error');
+        } 
+        // Route 2: API Errors get Cards ONLY
+        else {
             errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
         }
-        showToast(error.message, 'error');
     } finally {
         skeletonEl?.remove();
         renderGrid();
@@ -283,8 +287,14 @@ addBtn.addEventListener('_retry', async (e) => {
         addToHistory(added.location);
         showToast(`${added.location} added`, 'success');
     } catch (error) {
-        errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
-        showToast(error.message, 'error');
+        // Route 1: State Errors get Toasts ONLY
+        if (error.type === 'DUPLICATE' || error.type === 'LIMIT_REACHED') {
+            showToast(error.message, 'error');
+        } 
+        // Route 2: API Errors get Cards ONLY
+        else {
+            errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
+        }
     } finally {
         skeletonEl?.remove();
         renderGrid();
@@ -376,9 +386,14 @@ historyDropdown.addEventListener('click', async (event) => {
         const added = await dashboard.addCity(cityName);
         addToHistory(added.location);
     } catch (error) {
-        const errorId = Date.now();
-        errorCards.push({ id: errorId, message: error.message, type: error.type, cityName });
-        showToast(error.message, 'error');
+        // Route 1: State Errors get Toasts ONLY
+        if (error.type === 'DUPLICATE' || error.type === 'LIMIT_REACHED') {
+            showToast(error.message, 'error');
+        } 
+        // Route 2: API Errors get Cards ONLY
+        else {
+            errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
+        }
     } finally {
         skeletonEl?.remove();
         renderGrid();
