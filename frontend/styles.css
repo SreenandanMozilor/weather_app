@@ -602,3 +602,32 @@ body {
 [data-theme="dark"] .history-item {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+/* --- CURRENT LOCATION BUTTON --- */
+#current-location-btn {
+    background: var(--bg-surface);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    width: 40px; 
+    height: 40px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    cursor: pointer;
+    color: var(--accent-primary); /* Colors the SVG */
+    transition: transform 0.2s, background 0.3s;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] #current-location-btn {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#current-location-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Loading animation for the SVG */
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.loading-spin { animation: spin 1s linear infinite; }

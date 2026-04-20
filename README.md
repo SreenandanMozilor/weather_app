@@ -94,3 +94,11 @@ The final hours of development were spent hunting down insidious race conditions
 
 ### Conclusion
 This project evolved from a basic API fetching script into a highly defensive, state-managed application. The process of making mistakes—from asynchronous race conditions to CSS grid collisions—and methodically refactoring them provided invaluable experience in building resilient, production-ready Vanilla JavaScript architectures.# Weather App Project
+
+---
+
+## Extra Features (Beyond Assignment Scope)
+
+While the core application strictly adheres to the provided assignment brief and Figma designs, I took the initiative to build an additional feature to enhance the overall user experience:
+
+* **One-Click Geolocation:** A custom, animated map-pin button was added to the header controls. When clicked, it utilizes the browser's native Geolocation API and BigDataCloud's reverse-geocoding to instantly detect and track the user's current city. This feature hooks directly into the existing application architecture, ensuring it perfectly respects the 8-city maximum limit, duplicate city checks, and error-routing logic.

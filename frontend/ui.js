@@ -1,6 +1,7 @@
 import { WeatherDashboard } from '../backend/Main.js';
 import { addToHistory, getHistory } from '../backend/SearchHistory.js';
 import { createCard, createErrorCard, createSkeletonCard } from './weatherCard.js';
+import { getUserLocation, getGeoCityName } from '../backend/Geolocation.js';
 
 const dashboard = new WeatherDashboard();
 let isCelsius = true; //Toggle - celsius / fahrenheit
@@ -12,6 +13,7 @@ const addBtn = document.getElementById('add-city-button');
 const searchInput = document.getElementById('city-name');
 const unitToggle = document.querySelector('.unit-toggle');
 const skeletonTemplate = document.getElementById('skeleton');
+const locateBtn = document.getElementById('current-location-btn');
 
 // --- Initialization ---
 async function initApp() {
@@ -323,6 +325,33 @@ themeToggle.addEventListener('click', () => {
         document.documentElement.setAttribute('data-theme', 'dark');
         localStorage.setItem('weather_theme', 'dark');
         themeToggle.textContent = '☀️';
+    }
+});
+
+// --- GET CURRENT LOCATION ---
+locateBtn.addEventListener('click', async () => {
+    const svgIcon = locateBtn.querySelector('svg');
+    
+    // Start spinning animation
+    svgIcon.classList.add('loading-spin');
+
+    try {
+        // 1. Get coordinates from the browser
+        const { lat, lon } = await getUserLocation();
+        
+        // 2. Convert coordinates to a city name via BigDataCloud
+        const cityName = await getGeoCityName(lat, lon);
+        
+        // 3. Pass it to your existing robust add-city flow
+        if (cityName) {
+            handleAddCity(cityName);
+        }
+    } catch (error) {
+        // Gracefully handle denied permissions or reverse-geocode failures
+        showToast(error.message, 'error');
+    } finally {
+        // Stop spinning animation
+        svgIcon.classList.remove('loading-spin');
     }
 });
 
