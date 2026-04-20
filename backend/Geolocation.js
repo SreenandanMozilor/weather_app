@@ -4,6 +4,7 @@ function getUserLocation() {
     return new Promise((resolve, reject) => {
         if(!navigator.geolocation) {
             reject(new WeAppError("Geolocation unsupported","GEOLOC_UNSUPPORTED"));
+            return; //to prevent browsers which do not support geolocation to not fail (Browsers that lack geolocation would see a cryptic console error (TYPE ERROR) instead of GEOLOC_UNSUPPORTED if the return is not present as the code would then call navigator.geolocation.getCurrentPosition on undefined)
         }
 
         navigator.geolocation.getCurrentPosition(
@@ -20,12 +21,16 @@ function getUserLocation() {
     })
 }
 
-async function getGeoCityName(lat, lon){
+async function getGeoCityName(lat, lon) {
     const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
-    if(response.ok) {
-        const data = await response.json();
-        return data.city;
+    
+    // Throw an error if the request fails
+    if (!response.ok) {
+        throw new WeAppError("Reverse geocoding failed", "REVERSE_GEOCODE_ERROR");
     }
+    
+    const data = await response.json();
+    return data.city;
 }
 
 export {getGeoCityName, getUserLocation};

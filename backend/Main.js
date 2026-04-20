@@ -1,5 +1,4 @@
 import { getGeoCityName, getUserLocation } from "./Geolocation.js";
-import { addToHistory } from "./SearchHistory.js";
 import { getCoordinates, getWeather } from "./Api.js";
 import { WeAppError } from "./Error.js";
 
@@ -74,12 +73,20 @@ class WeatherDashboard {
     }
 
     async refreshAll() {
-        const results = await Promise.allSettled(this.#cities.map(c => {return getWeather(c.location)})); // We pass c.location because getWeather expects a string not object
+        // 1. Fire off the requests based on whatever is currently in the array
+        const results = await Promise.allSettled(this.#cities.map(c => getWeather(c.location)));
 
-        results.forEach((result, index) => {
-            if (result.status === 'fulfilled') {
-                this.#cities[index] = result.value;
-            }
+        // 2. Extract only the successful payloads into a clean array
+        const fulfilledData = results
+            .filter(result => result.status === 'fulfilled')
+            .map(result => result.value);
+
+        // 3. Map over the CURRENT state of #cities, safely matching by location.
+        // If a city was deleted mid-fetch, it won't be in this.#cities anymore, so the unused fetch data is safely ignored.
+        // If a new city was added mid-fetch, it won't be in fulfilledData, so it just keeps its existing state.
+        this.#cities = this.#cities.map(existingCity => {
+            const freshData = fulfilledData.find(data => data.location === existingCity.location);
+            return freshData ? freshData : existingCity; 
         });
 
         this.save();
@@ -113,8 +120,8 @@ class WeatherDashboard {
                 const cityName = await getGeoCityName(lat, lon);
                 if (cityName) await this.addCity(cityName);
             } catch (geoError) {
-                console.warn("Geolocation unavailable, showing empty state:", geoError.message);
-                // Silent fail — empty state will render
+                console.warn("Geolocation unavailable, showing empty state:", geoError.message); // Silent fail — empty state will render
+                throw new WeAppError("Couldn't detect your city — try searching instead.", "GEO_FAIL"); // Throwing an error for UI to catch
             }
         }
     }

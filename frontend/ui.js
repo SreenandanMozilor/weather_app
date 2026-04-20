@@ -1,6 +1,6 @@
 import { WeatherDashboard } from '../backend/Main.js';
 import { addToHistory, getHistory } from '../backend/SearchHistory.js';
-import { getWeatherClass, getWeatherIcon } from './ui-utils.js';
+import { createCard, createErrorCard, createSkeletonCard } from './weatherCard.js';
 
 const dashboard = new WeatherDashboard();
 let isCelsius = true; //Toggle - celsius / fahrenheit
@@ -22,6 +22,7 @@ async function initApp() {
         await dashboard.load();
     } catch (error) {
         console.error("Failed to initialize dashboard:", error);
+        showToast(error.message, 'error'); // For displaying toast notification
     }
     
     // Render whatever we loaded
@@ -30,9 +31,10 @@ async function initApp() {
 
 // --- Render Logic ---
 function renderGrid() {
+    grid.innerHTML = ''; // Clear grid first
     const cities = dashboard.getCities();
 
-    // The Empty State
+    // 1. The Empty State
     if (cities.length === 0 && errorCards.length === 0) {
         grid.innerHTML = `
             <div class="empty-state">
@@ -45,77 +47,80 @@ function renderGrid() {
                 <button class="add-first-city-btn">+ Add Your First City</button>
             </div>
         `;
+        
+        // Attach listener to the empty state button
+        grid.querySelector('.add-first-city-btn')?.addEventListener('click', () => searchInput.focus());
         return;
     }
 
-    // The Grid Render (using the pipeline we discussed)
-    let htmlString = cities.map(city => {
-        const themeClass = getWeatherClass(city.weatherCode);
-        const displayTemp = isCelsius ? city.temp : (city.temp * 9/5 + 32);
-        const displayFeels = isCelsius ? city.feelsLike : (city.feelsLike * 9/5 + 32);
-        const unit = isCelsius ? '°C' : '°F';
-        const currentIcon = getWeatherIcon(city.weatherCode);
+    // 2. Append Weather Cards
+    cities.forEach(city => {
+        const cardNode = createCard(city, isCelsius, () => {
+            dashboard.removeCity({ location: city.location });
+            renderGrid();
+            showToast(`${city.location} removed`, 'success');
+        });
+        grid.appendChild(cardNode);
+    });
 
-        return `
-            <div class="weather-card ${themeClass}" data-location="${city.location}" style="--accent-color: var(--color-${themeClass})">
-                <button class="remove-btn" data-target="${city.location}" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.2rem;">✖</button>
-                <h2 style="margin-bottom: 16px;">${city.location}</h2>
+    // 3. Append Error Cards
+    errorCards.forEach(err => {
+        const errNode = createErrorCard(
+            err, 
+            // onRemove callback
+            () => {
+                errorCards = errorCards.filter(e => e.id !== err.id);
+                renderGrid();
+            },
+            // onRetry callback
+            (cityName) => {
+                // Remove the error card from the state and screen immediately
+                errorCards = errorCards.filter(e => e.id !== err.id);
+                renderGrid(); 
                 
-                <div class="current-weather" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <h1 class="temp" style="font-size: 3.5rem; margin: 0; line-height: 1;">${Math.round(displayTemp)}${unit}</h1>
-                        <p style="margin: 8px 0 0 0; color: var(--text-secondary); font-size: 1.1rem;">Feels like: ${Math.round(displayFeels)}${unit}</p>
-                    </div>
-                    <div style="font-size: 4rem; text-shadow: 0 4px 12px rgba(0,0,0,0.1);">${currentIcon}</div>
-                </div>
-                
-                <div class="details" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem;">
-                    <span>💧 ${city.humidity}%</span>
-                    <span>💨 ${city.wind} km/h</span>
-                    <span>👁️ ${city.visibility} km</span>
-                </div>
-                
-                <div class="forecast-grid" style="display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 16px;">
-                    ${city.forecast.map((day, index) => `
-                        <div class="forecast-day" style="text-align: center; font-size: 0.85rem; flex: 1;">
-                            <div style="color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; font-size: 0.75rem; font-weight: 600;">${index === 0 ? 'TODAY' : new Date(day.date).toLocaleDateString('en-US', {weekday: 'short'})}</div>
-                            <div style="font-size: 1.5rem; margin: 8px 0;">${getWeatherIcon(day.code)}</div>
-                            <div><strong>${Math.round(isCelsius ? day.max : (day.max * 9/5 + 32))}°</strong></div>
-                            <div style="color: var(--text-secondary);">${Math.round(isCelsius ? day.min : (day.min * 9/5 + 32))}°</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }).join('');
+                // Fire the add logic directly!
+                handleAddCity(cityName); 
+            }
+        );
+        grid.appendChild(errNode);
+    });
+}
 
-    let errorHtml = errorCards.map(err => {
-        const icon = err.type === 'NOT_FOUND' ? '🌐' : '⚡';
-        const title = err.type === 'NOT_FOUND' ? 'City Not Found' : 'Network Error';
-        const btnLabel = err.type === 'NOT_FOUND' ? 'Try Again' : '↺ Retry';
-        return `
-        <div class="weather-card error-card" data-error-id="${err.id}">
-            <button class="remove-error-btn" data-error-id="${err.id}" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.2rem; color: var(--text-secondary);">✖</button>
-            
-            <div class="error-icon">${icon}</div>
-            <h3>${title}</h3>
-            <p>${err.type === 'NOT_FOUND' 
-                ? `We couldn't find "${err.cityName}". Check the spelling.`
-                : `Failed to fetch weather for "${err.cityName}".`}</p>
-            <button class="retry-error-btn" data-error-id="${err.id}" data-city="${err.cityName}">${btnLabel}</button>
-        </div>
-    `;
-    }).join('');
+// --- Core Application Logic ---
+async function handleAddCity(cityName) {
+    // FIX: If the empty state is currently on screen, remove it
+    const emptyState = grid.querySelector('.empty-state');
+    if (emptyState) {
+        emptyState.remove();
+    }
 
-    grid.innerHTML = htmlString + errorHtml;
+    // 1. Show loading state
+    const skeletonEl = createSkeletonCard();
+    grid.appendChild(skeletonEl);
+
+    try {
+        // 2. Fetch and add
+        const addedCity = await dashboard.addCity(cityName);
+        addToHistory(addedCity.location);
+        showToast(`${addedCity.location} was added to your dashboard`, 'success');
+        
+    } catch (error) {
+        if (error.type === 'DUPLICATE' || error.type === 'LIMIT_REACHED') {
+            showToast(error.message, 'error');
+        } else {
+            errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
+        }
+    } finally {
+        // 4. Cleanup and render
+        skeletonEl?.remove();
+        renderGrid(); 
+        // Note: If the fetch failed, renderGrid() will automatically put the empty state back
+    }
 }
 
 function showSkeleton() {
     grid.innerHTML = '';
-    for (let i = 0; i < 3; i++) {
-        const clone = skeletonTemplate.content.cloneNode(true);
-        grid.appendChild(clone);
-    }
+    grid.appendChild(createSkeletonCard());
 }
 
 const historyDropdown = document.getElementById('search-history');
@@ -139,9 +144,9 @@ function renderDropdownList(historyList, apiList, query = "") {
 
     // Render History Matches
     if (historyList.length > 0) {
-        html += `<div style="font-size: 0.8rem; color: var(--text-secondary); padding: 8px 12px; background: #f9fafb;">Recent Searches</div>`;
+        html += `<div class="dropdown-section-title">Recent Searches</div>`;
         html += historyList.map(city => `
-            <div class="history-item" data-city="${city}" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee;">
+            <div class="history-item" data-city="${city}">
                 <span>🕒 ${highlightMatch(city, query)}</span>
             </div>
         `).join('');
@@ -149,9 +154,9 @@ function renderDropdownList(historyList, apiList, query = "") {
 
     // Render API Suggestions
     if (filteredApiList.length > 0) {
-        html += `<div style="font-size: 0.8rem; color: var(--text-secondary); padding: 8px 12px; background: #f9fafb;">Global Cities</div>`;
+        html += `<div class="dropdown-section-title">Global Cities</div>`;
         html += filteredApiList.map(city => `
-            <div class="history-item" data-city="${city}" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee;">
+            <div class="history-item" data-city="${city}">
                 <span>📍 ${highlightMatch(city, query)}</span>
             </div>
         `).join('');
@@ -160,7 +165,7 @@ function renderDropdownList(historyList, apiList, query = "") {
     historyDropdown.innerHTML = html;
 }
 
-// 4. Helper function to make the matching letters bold! (UX Polish)
+// 4. Helper function to make the matching letters bold
 function highlightMatch(cityStr, query) {
     if (!query) return cityStr;
     const regex = new RegExp(`(${query})`, "gi");
@@ -250,102 +255,16 @@ searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addBtn.click();
 });
 
-//Add city
-addBtn.addEventListener('click', async () => {
+// Add city
+addBtn.addEventListener('click', () => {
     const cityName = searchInput.value.trim();
     if (!cityName) return;
 
-    // Append a single skeleton without wiping the grid
-    const clone = skeletonTemplate.content.cloneNode(true);
-    grid.appendChild(clone);
-    const skeletonEl = grid.lastElementChild;
-
-    try {
-        const addedCity = await dashboard.addCity(cityName);
-        searchInput.value = '';
-        historyDropdown.style.display = 'none';
-        addToHistory(addedCity.location);
-        showToast(`${addedCity.location} was added to your dashboard`, 'success');
-    } catch (error) {
-        // Route 1: State Errors get Toasts ONLY
-        if (error.type === 'DUPLICATE' || error.type === 'LIMIT_REACHED') {
-            showToast(error.message, 'error');
-        } 
-        // Route 2: API Errors get Cards ONLY
-        else {
-            errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
-        }
-    } finally {
-        skeletonEl?.remove();
-        renderGrid();
-    }
-});
-
-addBtn.addEventListener('_retry', async (e) => {
-    const cityName = e.detail;
+    // Reset UI
+    searchInput.value = '';
+    historyDropdown.style.display = 'none';
     
-    const clone = skeletonTemplate.content.cloneNode(true);
-    grid.appendChild(clone);
-    const skeletonEl = grid.lastElementChild;
-
-    try {
-        const added = await dashboard.addCity(cityName);
-        addToHistory(added.location);
-        showToast(`${added.location} added`, 'success');
-    } catch (error) {
-        // Route 1: State Errors get Toasts ONLY
-        if (error.type === 'DUPLICATE' || error.type === 'LIMIT_REACHED') {
-            showToast(error.message, 'error');
-        } 
-        // Route 2: API Errors get Cards ONLY
-        else {
-            errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
-        }
-    } finally {
-        skeletonEl?.remove();
-        renderGrid();
-    }
-});
-
-// Remove City & Empty State Actions (Using Event Delegation)
-grid.addEventListener('click', (event) => {
-    // 1. Check if they clicked the new Empty State button
-    const addFirstBtn = event.target.closest('.add-first-city-btn');
-    if (addFirstBtn) {
-        searchInput.focus(); // Jump cursor to the search bar!
-        return; // Stop here
-    }
-
-    // 2. Existing Remove button logic
-    const removeBtn = event.target.closest('.remove-btn'); 
-
-    if (removeBtn) {
-        // Handle normal city removal
-        const locationToRemove = removeBtn.getAttribute('data-target');
-        dashboard.removeCity({ location: locationToRemove });
-        renderGrid();
-        
-        showToast(`${locationToRemove} removed`, 'success'); 
-    }
-
-    const removeErrorBtn = event.target.closest('.remove-error-btn');
-    if (removeErrorBtn) {
-        const errorId = Number(removeErrorBtn.getAttribute('data-error-id'));
-        // Filter out the dismissed error card
-        errorCards = errorCards.filter(e => e.id !== errorId);
-        renderGrid();
-        return;
-    }
-
-    const retryBtn = event.target.closest('.retry-error-btn');
-    if (retryBtn) {
-        const errorId = Number(retryBtn.getAttribute('data-error-id'));
-        const cityName = retryBtn.getAttribute('data-city');
-        errorCards = errorCards.filter(e => e.id !== errorId);
-        // Re-trigger add
-        addBtn.dispatchEvent(new CustomEvent('_retry', { detail: cityName }));
-        return;
-    }
+    handleAddCity(cityName);
 });
 
 // Unit Toggle
@@ -368,43 +287,17 @@ unitToggle.addEventListener('click', () => {
     renderGrid();
 });
 
-historyDropdown.addEventListener('click', async (event) => {
-    // 1. Check if we clicked on a history item (or something inside it)
-    // We use .closest() instead of classList.contains() just in case the user clicked directly on the <span> or the 🕒 emoji!
+historyDropdown.addEventListener('click', (event) => {
     const clickedItem = event.target.closest('.history-item');
-    
-    // If they clicked the container but not an item, do nothing
     if (!clickedItem) return; 
 
-    // 2. Extract the city name from our custom data attribute
     const cityName = clickedItem.getAttribute('data-city');
 
-    // 3. Hide the dropdown and clear the search bar (Good UI/UX)
+    // Reset UI
     historyDropdown.style.display = 'none';
     searchInput.value = '';
 
-    // 4. Run the exact same sequence as your "Add City" button
-    const clone = skeletonTemplate.content.cloneNode(true);
-    grid.appendChild(clone);
-    const skeletonEl = grid.lastElementChild;
-
-    try {
-        const added = await dashboard.addCity(cityName);
-        addToHistory(added.location);
-    } catch (error) {
-        // Route 1: State Errors get Toasts ONLY
-        if (error.type === 'DUPLICATE' || error.type === 'LIMIT_REACHED') {
-            showToast(error.message, 'error');
-        } 
-        // Route 2: API Errors get Cards ONLY
-        else {
-            errorCards.push({ id: Date.now(), message: error.message, type: error.type, cityName });
-        }
-    } finally {
-        skeletonEl?.remove();
-        renderGrid();
-        renderDropdownList(getHistory(), [], ""); // Re-render the dropdown so the clicked city moves to the top
-    }
+    handleAddCity(cityName);
 });
 
 // --- DARK MODE LOGIC ---
